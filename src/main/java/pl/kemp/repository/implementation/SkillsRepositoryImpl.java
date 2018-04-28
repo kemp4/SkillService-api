@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import pl.kemp.models.Skill;
 import pl.kemp.models.SkillBuilder;
+import pl.kemp.models.dto.SkillNewDTO;
 import pl.kemp.repository.SkillsRepository;
 
 @Repository
@@ -30,7 +31,9 @@ public class SkillsRepositoryImpl implements SkillsRepository {
     }
 
     @Override
-    public void addSkill() {
+    public void addSkill(SkillNewDTO skillNewDTO) {
+        String query = "INSERT INTO skills(skillName) VALUES(?)";
+        jdbcTemplate.update(query, skillNewDTO.getSkillName());
 
     }
 

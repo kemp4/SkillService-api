@@ -1,8 +1,10 @@
 package pl.kemp.controller;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import pl.kemp.models.Skill;
+import pl.kemp.models.dto.*;
 import pl.kemp.services.UserService;
 
 @RestController
@@ -11,28 +13,32 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/users")
-    public void createUser(String skillName) {
-        //TODO
+    @PostMapping(value = "/users")
+    public void createUser(@RequestBody UserNewDTO userNew) {
+       userService.createUser(userNew);
     }
     @GetMapping("/users/{id}")
-    public Skill getUser(@RequestParam String id) {
-        return null;//TODO
+    public UserCreatedDTO getUser(@PathVariable String id) {
+        return userService.getUserById(id);
     }
+
     @GetMapping("/users/alldetails/{userId}")
-    public Skill getUserWithAllDetails(@RequestParam String id) {
-        return null;//TODO
+    public DetailsFullDTO getUserWithAllDetails(@PathVariable String userId) {
+        return userService.getAllUserDetailsById(userId);
     }
-    @PutMapping("/users/alldetails")
-    public Skill updateDetails() {
-        return null;//TODO
+
+    @PutMapping("/users/details")
+    public UserFullDTO updateDetails(@RequestBody DetailsNewDTO details) {
+        return userService.changeUserDetails(details);
     }
+
     @GetMapping("/users/details/{id}")
-    public Skill getUserWithDetails(@RequestParam String id) {
-        return null;//TODO
+    public DetailsDTO getUserWithDetails(@PathVariable String id) {
+        return userService.getUserDetailsById(id);
     }
+
     @PutMapping("/users/skills")
-    public Skill addNewSillToUser() {
-        return null;//TODO
+    public UserFullDTO addNewSkillToUser(@RequestBody SaveSkillsRequest skill) {
+        return userService.addSkillToUser(skill);
     }
 }
