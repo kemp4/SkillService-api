@@ -26,20 +26,20 @@ public class Main {
 
         jdbcTemplate.execute("DROP TABLE users IF EXISTS");
         jdbcTemplate.execute("CREATE TABLE users(" +
-                "id VARCHAR(255) primary key,email  VARCHAR(255),name VARCHAR(255),password VARCHAR (255))");
+                "id VARCHAR(255) primary key,email  VARCHAR(255),name VARCHAR(255) unique ,password VARCHAR (255))");
         jdbcTemplate.execute("INSERT INTO users (id,email,name,password) values('cedee57e-abcd-43c6-bc19-81f693a0763a','janjan@poczta.pl','janjan','8SqDwwMeYv')");
 
         jdbcTemplate.execute("DROP TABLE details IF EXISTS");
         jdbcTemplate.execute("CREATE TABLE details(" +
                 "id VARCHAR(255) primary key," +
                 "fieldOfStudy  VARCHAR(255)," +
-                "firstName VARCHAR(255)," +
-                "lastName VARCHAR (255)," +
+                "firstName VARCHAR(255) not null," +
+                "lastName VARCHAR (255) not null," +
                 "university VARCHAR (255)," +
                 "userId VARCHAR (255) UNIQUE NOT NULL ," +
                 "yearOfStudy INT," +
                 "foreign  key(userId) references users(id))");
-        jdbcTemplate.execute("INSERT INTO details (id,userId) values('cedee57e-abcd-43c6-bc19-81f693a07ssa','cedee57e-abcd-43c6-bc19-81f693a0763a')");
+
 
         jdbcTemplate.execute("DROP TABLE usersSkills IF EXISTS");
         jdbcTemplate.execute("CREATE TABLE usersSkills(" +

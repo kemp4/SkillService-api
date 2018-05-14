@@ -17,29 +17,23 @@ import pl.kemp.models.User;
 import pl.kemp.models.dto.*;
 import pl.kemp.repository.UserRepository;
 
-import java.io.UnsupportedEncodingException;
-import java.util.UUID;
-
 @Repository
 public class UserRepositoryImpl implements UserRepository {
     @Autowired
     JdbcTemplate jdbcTemplate;
 
     @Override
-    public void addUser(UserNewDTO newUser) {
-        try {
-            jdbcTemplate.update("INSERT INTO users(id, email, password) VALUES(?,?,?)", generateUUID(newUser), newUser.getEmail(),newUser.getName());
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            //TODO throw new Exception
-        }
+    @Transactional
+    public void addUser(UserNewDTO newUser, String userId, String password) {
+
+        jdbcTemplate.update("INSERT INTO users(id, email, name, password) VALUES(?,?,?,?)", userId, newUser.getEmail(),newUser.getName(),password);
+
     }
 
     @Override
     public UserCreatedDTO getUserById(String id) {
         User result = getUser(id);
         ModelMapper modelMapper = new ModelMapper();
-        //modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.LOOSE);
         UserCreatedDTO userCreatedDTO = modelMapper.map(result, UserCreatedDTO.class);
         return userCreatedDTO;
     }
@@ -60,31 +54,57 @@ public class UserRepositoryImpl implements UserRepository {
         String query ="SELECT id, name, email, password FROM users WHERE id=?";
         return (User) jdbcTemplate.queryForObject(query, new Object[] { id },new BeanPropertyRowMapper(User.class));
     }
-    private Detail getDetailsByUserId(String id) {
-        String query ="SELECT id, fieldOfStudy, firstName, lastName, university, yearOfStudy FROM details where userId=? ";
+    private Detail getDetailsById(String id) {
+        String query ="SELECT id, fieldOfStudy, firstName, lastName, university, yearOfStudy FROM details WHERE id=? ";
         return (Detail) jdbcTemplate.queryForObject(query, new Object[] { id },new BeanPropertyRowMapper(Detail.class));
+    }
+    private Detail getDetailsByUserId(String userId) {
+        String query ="SELECT id, fieldOfStudy, firstName, lastName, university, yearOfStudy FROM details WHERE userId=? ";
+        return (Detail) jdbcTemplate.queryForObject(query, new Object[] { userId },new BeanPropertyRowMapper(Detail.class));
     }
     private List<Skill> getSkillsByUserId(String id) {
         String query ="SELECT skills.id, skills.skillName FROM skills " +
-                "JOIN usersSkills on skills.id=usersSkills.skillId " +
-                "JOIN users on users.id = usersSkills.userId where users.id=? ";
+                "JOIN usersSkills ON skills.id=usersSkills.skillId " +
+                "WHERE usersSkills.userId=? ";
 
         List<Skill> result = jdbcTemplate.query(query,new Object[] { id },new BeanPropertyRowMapper(Skill.class));
         return result;
     }
     @Override
     @Transactional
-    public UserFullDTO updateUserDetails(DetailsNewDTO details,String loggedUserId) {
-        jdbcTemplate.update("Update details SET fieldOfStudy=?, firstName=?, lastName=?, university=?, yearOfStudy=? " +
-                        " Where details.userId=?",
-                details.getFieldOfStudy(),details.getFirstName(),details.getLastName(),details.getUniversity(),details.getYearOfStudy(),loggedUserId);
-        return getUserFullDTOById(loggedUserId);
+    public String updateUserDetails(DetailsNewDTO details,String userId) {
+            String query="Update details SET fieldOfStudy=?, firstName=?, lastName=?, university=?, yearOfStudy=? " +
+                    " Where details.userId=?";
+            jdbcTemplate.update(query,
+                    details.getFieldOfStudy(), details.getFirstName(), details.getLastName(), details.getUniversity(), details.getYearOfStudy(), userId);
+            String detailsIdQuery = "SELECT id FROM details WHERE userID =?";
+        return jdbcTemplate.queryForObject(detailsIdQuery, new Object[]{userId}, String.class);
     }
+    @Override
+    public void insertUserDetails(String detailId, String userId, DetailsNewDTO details) {
+        String query = "Insert into details(id ,fieldOfStudy, firstName, lastName, university, yearOfStudy, userId) " +
+                " values (?,?,?,?,?,?,?) ";
+        jdbcTemplate.update(query, detailId, details.getFieldOfStudy(), details.getFirstName(), details.getLastName(), details.getUniversity(), details.getYearOfStudy(), userId);
+    }
+
+    @Override
+    public String getUserIdByName(String username) {
+        String query="SELECT id FROM users WHERE name =?";
+        return jdbcTemplate.queryForObject(query, new Object[]{username}, String.class);
+    }
+
+    @Override
+    public boolean areDetailsForUserCreated(String userId) {
+        String countQuery="SELECT COUNT(id) FROM details WHERE userId =?";
+        Long isCreated = jdbcTemplate.queryForObject(countQuery, new Object[]{userId}, Long.class);
+        return isCreated.equals(1L);
+    }
+
 
     @Override
     public DetailsDTO getUserDetails(String id) {
         ModelMapper modelMapper= new ModelMapper();
-        Detail detail = getDetailsByUserId(id);
+        Detail detail = getDetailsById(id);
         DetailsDTO detailsDTO = modelMapper.map(detail,DetailsDTO.class);
         return detailsDTO;
     }
@@ -93,10 +113,11 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     @Transactional
     public UserFullDTO addSkillToUser(SaveSkillsRequest skill) {
-        String query = "INSERT INTO usersSkills(userId, skillId) VALUES(?,?)";
+        String sql = "INSERT INTO usersSkills(userId, skillId) VALUES(?,?)";
         List<Long> skillsList = skill.getSkillsIds();
-
-        jdbcTemplate.batchUpdate(query, new BatchPreparedStatementSetter() {
+        String deleteSql = "DELETE FROM usersSkills WHERE userId=?";
+        jdbcTemplate.update(deleteSql,new Object[]{skill.getUserId()});
+        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 ps.setString(1, skill.getUserId());
                 ps.setLong(2, skillsList.get(i));
@@ -109,6 +130,7 @@ public class UserRepositoryImpl implements UserRepository {
         return getUserFullDTOById(skill.getUserId());
     }
 
+
     private UserFullDTO getUserFullDTOById(String userId) {
         ModelMapper modelMapper= new ModelMapper();
         User user = getUser(userId);
@@ -120,10 +142,4 @@ public class UserRepositoryImpl implements UserRepository {
         return userFullDTO;
     }
 
-    private String generateUUID(UserNewDTO newUser) throws UnsupportedEncodingException {
-        String source = newUser.getEmail() +newUser.getName();
-        byte[] bytes = source.getBytes("UTF-8");
-        UUID uuid = UUID.nameUUIDFromBytes(bytes);
-        return uuid.toString();
-    }
 }

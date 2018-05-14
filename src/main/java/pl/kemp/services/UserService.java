@@ -3,13 +3,13 @@ package pl.kemp.services;
 import pl.kemp.models.dto.*;
 
 public interface UserService {
-    void createUser(UserNewDTO newUser);
+    String createUser(UserNewDTO newUser);
 
     UserCreatedDTO getUserById(String id);
 
     DetailsFullDTO getAllUserDetailsById(String userId);
 
-    UserFullDTO changeUserDetails(DetailsNewDTO details);
+    String changeUserDetails(DetailsNewDTO details);
 
     DetailsDTO getUserDetailsById(String id);
 

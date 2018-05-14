@@ -1,11 +1,9 @@
 package pl.kemp.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 import pl.kemp.models.Skill;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
 import pl.kemp.models.dto.SkillNewDTO;
 import pl.kemp.services.SkillsService;
 
@@ -23,6 +21,8 @@ public class SkillController {
         List<Skill> result = skillsService.getAllSkills();
         return result;
     }
+
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/skills")
     public void addSkill(@RequestBody SkillNewDTO skillNewDTO) {
         skillsService.addNewSkill(skillNewDTO);

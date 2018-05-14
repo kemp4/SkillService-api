@@ -5,12 +5,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DetailsDTO {
 
-  private String fieldOfStudy = null;
-  private String firstName = null;
-  private String id = null;
-  private String lastName = null;
-  private String university = null;
-  private Integer yearOfStudy = null;
+  private String fieldOfStudy;
+  private String firstName ;
+  private String id ;
+  private String lastName;
+  private String university;
+  private Integer yearOfStudy;
 
   public String getFieldOfStudy() {
     return fieldOfStudy;
